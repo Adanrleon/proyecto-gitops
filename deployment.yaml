@@ -3,7 +3,7 @@ kind: Deployment
 metadata:
   name: mi-app-deployment
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app: mi-app
@@ -13,8 +13,8 @@ spec:
         app: mi-app
     spec:
       containers:
-      - name: contenedor-web
-        image: localhost:5001/mi-app:v1.0.0
-        imagePullPolicy: IfNotPresent
-        ports:
-        - containerPort: 80
+        - name: mi-app-container
+          image: host.docker.internal:5001/mi-app:v1.0.0
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 80
