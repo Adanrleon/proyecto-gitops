@@ -14,6 +14,7 @@ spec:
     spec:
       containers:
       - name: contenedor-web
-        image: nginx:alpine
+        image: localhost:5001/mi-app:v1.0.0
+        imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 80
