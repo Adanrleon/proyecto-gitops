@@ -14,7 +14,6 @@ spec:
     spec:
       containers:
       - name: contenedor-web
-        image: mi-app:v1.0.0
-        imagePullPolicy: Never
+        image: nginx:alpine
         ports:
         - containerPort: 80
