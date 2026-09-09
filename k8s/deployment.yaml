@@ -16,7 +16,7 @@ spec:
       - name: web
         # Tras el primer Workflow, esta etiqueta será el SHA exacto del commit.
         # No usamos :latest porque Kubernetes no reinicia Pods al cambiarla.
-        image: adanleon/app-gitops:aea149b81b55573aec72ab1e3540f37e73fdde3e
+        image: adanleon/app-gitops:8bd3b2c59feb30c7a5114153ade2ac664f0eb088
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 80 # Nginx expone el puerto 80 dentro del contenedor
