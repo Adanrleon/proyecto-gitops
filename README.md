@@ -1,5 +1,16 @@
 # Referencia Rápida - Proyecto GitOps
 
+## Flujo GitOps actual
+
+Cada push a `main` construye una imagen con el SHA del commit, por ejemplo
+`adanleon/app-gitops:abc123...`. El Workflow actualiza esa etiqueta en
+`k8s/deployment.yaml` y hace un commit automático con `[skip build]`. Argo CD
+detecta el manifiesto actualizado y crea un Pod con esa imagen exacta.
+
+El secreto `github-token` del namespace `argo` debe contener un fine-grained
+personal access token de GitHub con permiso **Contents: Read and write** sobre
+este repositorio. Nunca lo añadas a Git.
+
 ## Estado Actual
 ✅ **Proyecto completamente funcional**
 

@@ -10,6 +10,21 @@ spec:
   - name: test-dep
     eventSourceName: github-eventsource
     eventName: git-webhook
+    # Solo construimos los pushes a main. Los commits que este mismo
+    # Workflow hace para actualizar el manifiesto llevan [skip build],
+    # por lo que no provocan un bucle de compilaciones.
+    filters:
+      dataLogicalOperator: and
+      data:
+      - path: body.ref
+        type: string
+        value:
+        - "^refs/heads/main$"
+      - path: body.head_commit.message
+        type: string
+        comparator: "!="
+        value:
+        - "^chore\\(gitops\\): deploy .* \\[skip build\\]$"
   triggers:
   - template:
       name: kaniko-trigger
@@ -23,7 +38,11 @@ spec:
               generateName: kaniko-build-
               namespace: argo
             spec:
-              entrypoint: main
+              entrypoint: build-and-deploy
+              arguments:
+                parameters:
+                - name: revision
+                  value: ""
               volumes:
               - name: registry-creds
                 secret:
@@ -32,20 +51,61 @@ spec:
                   - key: .dockerconfigjson
                     path: config.json
               templates:
-              - name: main
+              - name: build-and-deploy
+                steps:
+                - - name: build-image
+                    template: build-image
+                - - name: update-gitops-manifest
+                    template: update-gitops-manifest
+              - name: build-image
                 inputs:
                   artifacts:
                   - name: repo-source
                     path: /workspace
                     git:
                       repo: https://github.com/Adanrleon/proyecto-gitops.git
-                      revision: main
+                      revision: "{{workflow.parameters.revision}}"
                 container:
                   image: gcr.io/kaniko-project/executor:latest
                   args:
                   - "--context=dir:///workspace"
                   - "--dockerfile=Dockerfile"
-                  - "--destination=adanleon/app-gitops:latest"
+                  - "--destination=adanleon/app-gitops:{{workflow.parameters.revision}}"
                   volumeMounts:
                   - name: registry-creds
                     mountPath: /kaniko/.docker/
+              - name: update-gitops-manifest
+                inputs:
+                  artifacts:
+                  - name: repo-source
+                    path: /workspace
+                    git:
+                      repo: https://github.com/Adanrleon/proyecto-gitops.git
+                      revision: "{{workflow.parameters.revision}}"
+                container:
+                  image: alpine/git:v2.45.2
+                  workingDir: /workspace
+                  env:
+                  - name: GITHUB_TOKEN
+                    valueFrom:
+                      secretKeyRef:
+                        name: github-token
+                        key: token
+                  - name: REVISION
+                    value: "{{workflow.parameters.revision}}"
+                  command: [sh, -ec]
+                  args:
+                  - |
+                    sed -i "s|image: adanleon/app-gitops:.*|image: adanleon/app-gitops:${REVISION}|" k8s/deployment.yaml
+                    git config user.name "gitops-bot"
+                    git config user.email "gitops-bot@users.noreply.github.com"
+                    git remote set-url origin "https://x-access-token:${GITHUB_TOKEN}@github.com/Adanrleon/proyecto-gitops.git"
+                    git add k8s/deployment.yaml
+                    git diff --cached --quiet && exit 0
+                    git commit -m "chore(gitops): deploy ${REVISION} [skip build]"
+                    git push origin HEAD:main
+        parameters:
+        - src:
+            dependencyName: test-dep
+            dataKey: body.after
+          dest: spec.arguments.parameters.0.value

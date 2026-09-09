@@ -14,8 +14,9 @@ spec:
     spec:
       containers:
       - name: web
-        # Aquí usamos la imagen exacta que acabas de subir a Docker Hub
+        # Tras el primer Workflow, esta etiqueta será el SHA exacto del commit.
+        # No usamos :latest porque Kubernetes no reinicia Pods al cambiarla.
         image: adanleon/app-gitops:latest
-        imagePullPolicy: Always  # Siempre descarga la versión más reciente de la imagen
+        imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 80 # Nginx expone el puerto 80 dentro del contenedor
