@@ -1,0 +1,20 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: app-gitops
+spec:
+  replicas: 1 # Solo queremos 1 copia de nuestra app corriendo por ahora
+  selector:
+    matchLabels:
+      app: app-gitops
+  template:
+    metadata:
+      labels:
+        app: app-gitops
+    spec:
+      containers:
+      - name: web
+        # Aquí usamos la imagen exacta que acabas de subir a Docker Hub
+        image: adanleon/app-gitops:v1
+        ports:
+        - containerPort: 80 # Nginx expone el puerto 80 dentro del contenedor
