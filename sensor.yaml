@@ -99,7 +99,17 @@ spec:
                     sed -i "s|image: adanleon/app-gitops:.*|image: adanleon/app-gitops:${REVISION}|" k8s/deployment.yaml
                     git config user.name "gitops-bot"
                     git config user.email "gitops-bot@users.noreply.github.com"
-                    git remote set-url origin "https://x-access-token:${GITHUB_TOKEN}@github.com/Adanrleon/proyecto-gitops.git"
+                    # GIT_ASKPASS entrega el token a Git sin incluirlo en la
+                    # URL remota, los argumentos del proceso ni los logs.
+                    export GIT_ASKPASS=/tmp/git-askpass
+                    export GIT_TERMINAL_PROMPT=0
+                    printf '%s\n' '#!/bin/sh' \
+                      'case "$1" in' \
+                      '  *Username*) printf "%s\\n" "x-access-token" ;;' \
+                      '  *Password*) printf "%s" "$GITHUB_TOKEN" ;;' \
+                      'esac' > "$GIT_ASKPASS"
+                    chmod 700 "$GIT_ASKPASS"
+                    git remote set-url origin "https://github.com/Adanrleon/proyecto-gitops.git"
                     git add k8s/deployment.yaml
                     git diff --cached --quiet && exit 0
                     git commit -m "chore(gitops): deploy ${REVISION} [skip build]"
