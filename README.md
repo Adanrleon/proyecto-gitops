@@ -11,6 +11,10 @@ El secreto `github-token` del namespace `argo` debe contener un fine-grained
 personal access token de GitHub con permiso **Contents: Read and write** sobre
 este repositorio. Nunca lo añadas a Git.
 
+`argocd-refresh-rbac.yaml` concede al Workflow únicamente permiso para pedir
+una actualización de la aplicación `app-gitops` de Argo CD. No le concede
+permisos de administrador del clúster.
+
 ## Estado Actual
 ✅ **Proyecto completamente funcional**
 
