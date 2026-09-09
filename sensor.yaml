@@ -1,0 +1,55 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Sensor
+metadata:
+  name: github-sensor
+  namespace: argo
+spec:
+  template:
+    serviceAccountName: argo-sa
+  dependencies:
+  - name: test-dep
+    eventSourceName: github-eventsource
+    eventName: git-webhook
+  triggers:
+  - template:
+      name: kaniko-trigger
+      k8s:
+        operation: create
+        source:
+          resource:
+            apiVersion: argoproj.io/v1alpha1
+            kind: Workflow
+            metadata:
+              generateName: kaniko-build-
+              namespace: argo
+            spec:
+              entrypoint: main
+              volumes:
+              - name: registry-creds
+                secret:
+                  secretName: docker-config
+                  items:
+                  - key: .dockerconfigjson
+                    path: config.json
+              templates:
+              - name: main
+                inputs:
+                  artifacts:
+                  - name: repo-source
+                    path: /workspace
+                    git:
+                      repo: https://github.com/Adanrleon/proyecto-gitops.git
+                      revision: main
+                container:
+                  image: gcr.io/kaniko-project/executor:latest
+                  args:
+                  - "--context=dir:///workspace"
+                  - "--dockerfile=Dockerfile"
+                  - "--destination=adanleon/app-gitops:v2"
+                  volumeMounts:
+                  - name: registry-creds
+                    mountPath: /kaniko/.docker/
+        parameters:
+        - src:
+            dependencyName: test-dep
+          dest: spec.templates.0.inputs.artifacts.0.git.revision
