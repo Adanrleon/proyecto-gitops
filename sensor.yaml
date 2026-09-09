@@ -45,11 +45,7 @@ spec:
                   args:
                   - "--context=dir:///workspace"
                   - "--dockerfile=Dockerfile"
-                  - "--destination=adanleon/app-gitops:v2"
+                  - "--destination=adanleon/app-gitops:latest"
                   volumeMounts:
                   - name: registry-creds
                     mountPath: /kaniko/.docker/
-        parameters:
-        - src:
-            dependencyName: test-dep
-          dest: spec.templates.0.inputs.artifacts.0.git.revision

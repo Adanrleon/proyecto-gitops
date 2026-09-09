@@ -5,8 +5,8 @@ metadata:
   namespace: argo
 spec:
   selector:
-    app: argo-events
     eventsource-name: github-eventsource
+    controller: eventsource-controller
   ports:
   - port: 12000
     targetPort: 12000
