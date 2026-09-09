@@ -57,6 +57,8 @@ spec:
                     template: build-image
                 - - name: update-gitops-manifest
                     template: update-gitops-manifest
+                - - name: refresh-argocd
+                    template: refresh-argocd
               - name: build-image
                 inputs:
                   artifacts:
@@ -114,6 +116,21 @@ spec:
                     git diff --cached --quiet && exit 0
                     git commit -m "chore(gitops): deploy ${REVISION} [skip build]"
                     git push origin HEAD:main
+              - name: refresh-argocd
+                # Argo CD sigue siendo quien aplica el manifiesto. Este paso
+                # solo invalida su caché para que lea el commit recién creado
+                # de inmediato, en vez de esperar el siguiente sondeo.
+                container:
+                  image: bitnami/kubectl:latest
+                  command: [kubectl]
+                  args:
+                  - annotate
+                  - application
+                  - app-gitops
+                  - -n
+                  - argocd
+                  - argocd.argoproj.io/refresh=hard
+                  - --overwrite
         parameters:
         - src:
             dependencyName: test-dep
